@@ -32,9 +32,9 @@ router.post('/', asyncHandler(async (req, res, next) => {
         return next();
     }
     if (req.query.action === 'register') {
-        const format = new RegExp("^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{5,}$");
+        const format = new RegExp("^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{5,}$");
         if (!format.test(req.body.password)) {
-            res.status(401).json({ success: false, msg: 'Password must be 5 characters long and contain at least one number and one letter.' });
+            res.status(401).json({ success: false, msg: 'Password must be at least 5 characters long and contain at least one letter and one number.' });
             return next();
         }
         await User.create(req.body);

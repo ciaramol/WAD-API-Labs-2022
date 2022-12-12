@@ -34,6 +34,7 @@ const AuthContextProvider = (props) => {
     setTimeout(() => setIsAuthenticated(false), 100);
   }
 
+  
   return (
     <AuthContext.Provider
       value={{
