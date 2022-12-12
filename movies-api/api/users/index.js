@@ -26,40 +26,40 @@ router.put('/:id', async (req, res) => {
 });
 
 // Register OR authenticate a user
-router.post('/',asyncHandler( async (req, res, next) => {
+router.post('/', asyncHandler(async (req, res, next) => {
     if (!req.body.username || !req.body.password) {
-      res.status(401).json({success: false, msg: 'Please pass username and password.'});
-      return next();
+        res.status(401).json({ success: false, msg: 'Please pass username and password.' });
+        return next();
     }
     if (req.query.action === 'register') {
         const format = new RegExp("^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{5,}$");
-        if(!format.test(req.body.password)){
-            res.status(401).json({success: false, msg: 'Password must be 5 characters long and contain at least one number and one letter.'});
+        if (!format.test(req.body.password)) {
+            res.status(401).json({ success: false, msg: 'Password must be 5 characters long and contain at least one number and one letter.' });
             return next();
         }
-      await User.create(req.body);
-      res.status(201).json({code: 201, msg: 'Successful created new user.'});
+        await User.create(req.body);
+        res.status(201).json({ code: 201, msg: 'Successful created new user.' });
     } else {
-      const user = await User.findByUserName(req.body.username);
+        const user = await User.findByUserName(req.body.username);
         if (!user) return res.status(401).json({ code: 401, msg: 'Authentication failed. User not found.' });
         user.comparePassword(req.body.password, (err, isMatch) => {
-          if (isMatch && !err) {
-            // if user is found and password matches, create a token
-            const token = jwt.sign(user.username, process.env.SECRET);
-            // return the information including token as JSON
-            res.status(200).json({success: true, token: 'BEARER ' + token});
-          } else {
-            res.status(401).json({code: 401,msg: 'Authentication failed. Wrong password.'});
-          }
+            if (isMatch && !err) {
+                // if user is found and password matches, create a token
+                const token = jwt.sign(user.username, process.env.SECRET);
+                // return the information including token as JSON
+                res.status(200).json({ success: true, token: 'BEARER ' + token });
+            } else {
+                res.status(401).json({ code: 401, msg: 'Authentication failed. Wrong password.' });
+            }
         });
-      }
-  }));
+    }
+}));
 
-  router.get('/:userName/favourites', asyncHandler( async (req, res) => {
+router.get('/:userName/favourites', asyncHandler(async (req, res) => {
     const userName = req.params.userName;
     const user = await User.findByUserName(userName).populate('favourites');
     res.status(200).json(user.favourites);
-  }));
+}));
 
 //Add a favourite. No Error Handling Yet. Can add duplicates too!
 router.post('/:userName/favourites', asyncHandler(async (req, res) => {
@@ -67,10 +67,14 @@ router.post('/:userName/favourites', asyncHandler(async (req, res) => {
     const userName = req.params.userName;
     const movie = await movieModel.findByMovieDBId(newFavourite);
     const user = await User.findByUserName(userName);
-    await user.favourites.push(movie._id);
-    await user.save(); 
-    res.status(201).json(user); 
-  }));
+    if (user.favourites.includes(movie._id)) {
+        res.status(401).json({ success: false, msg: "Movie already a favourite." });
+    } else {
+        await user.favourites.push(movie._id);
+        await user.save();
+        res.status(201).json(user);
+    }
+}));
 
 // register(Create)/Authenticate User
 router.post('/', async (req, res) => {
